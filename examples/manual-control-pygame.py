@@ -3,7 +3,6 @@ import cv2
 import pygame
 import numpy as np
 import time
-import os
 
 # Speed of the drone
 S = 60
@@ -29,9 +28,9 @@ class FrontEnd(object):
         self.blur_effect = False  # Track blur state
         self.traffic_sign = False  # Track traffic sign state
 
-        # Load traffic sign image
+        # Load and resize traffic sign image
         self.traffic_sign_image = pygame.image.load("examples/curve.jpeg")
-        self.traffic_sign_image = pygame.transform.scale(self.traffic_sign_image, (100, 100))
+        self.traffic_sign_image = pygame.transform.scale(self.traffic_sign_image, (200, 200))  # Resize to 2x
 
         pygame.time.set_timer(pygame.USEREVENT + 1, 1000 // FPS)
 
@@ -72,7 +71,7 @@ class FrontEnd(object):
             cv2.putText(frame, text, (5, 720 - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             if self.blur_effect:  # Apply blur if the effect is active
                 frame = cv2.GaussianBlur(frame, (15, 15), 0)
 
@@ -91,7 +90,7 @@ class FrontEnd(object):
                 self.screen.blit(text_surface, (400, 300))
 
             if self.traffic_sign:  # Show traffic sign if active
-                self.screen.blit(self.traffic_sign_image, (400, 200))  # Display the sign at (400, 200)
+                self.screen.blit(self.traffic_sign_image, (760, 10))  # Display at the top-right corner
 
             pygame.display.update()
             time.sleep(1 / FPS)
