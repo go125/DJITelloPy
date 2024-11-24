@@ -3,6 +3,7 @@ import cv2
 import pygame
 import numpy as np
 import time
+import os
 
 # Speed of the drone
 S = 60
@@ -25,7 +26,12 @@ class FrontEnd(object):
         self.speed = 10
         self.send_rc_control = False
 
-        self.blur_effect = False  # New: Track blur state
+        self.blur_effect = False  # Track blur state
+        self.traffic_sign = False  # Track traffic sign state
+
+        # Load traffic sign image
+        self.traffic_sign_image = pygame.image.load("examples/curve.jpeg")
+        self.traffic_sign_image = pygame.transform.scale(self.traffic_sign_image, (100, 100))
 
         pygame.time.set_timer(pygame.USEREVENT + 1, 1000 // FPS)
 
@@ -54,7 +60,7 @@ class FrontEnd(object):
                 elif event.type == pygame.KEYUP:
                     self.keyup(event.key)
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.toggle_blur_effect(event.pos)  # New: Handle checkbox click
+                    self.handle_checkbox_click(event.pos)
 
             if frame_read.stopped:
                 break
@@ -76,13 +82,16 @@ class FrontEnd(object):
             frame = pygame.surfarray.make_surface(frame)
             self.screen.blit(frame, (0, 0))
 
-            # Draw checkbox
-            self.draw_checkbox()
+            # Draw checkboxes
+            self.draw_checkboxes()
 
-            if self.blur_effect:  # Show "眠気" if the effect is active
+            if self.blur_effect:  # Show "Sleepy!" if the blur effect is active
                 font = pygame.font.Font(None, 74)
                 text_surface = font.render("Sleepy!", True, (255, 0, 0))
                 self.screen.blit(text_surface, (400, 300))
+
+            if self.traffic_sign:  # Show traffic sign if active
+                self.screen.blit(self.traffic_sign_image, (400, 200))  # Display the sign at (400, 200)
 
             pygame.display.update()
             time.sleep(1 / FPS)
@@ -94,10 +103,6 @@ class FrontEnd(object):
             self.for_back_velocity = S
         elif key == pygame.K_DOWN:
             self.for_back_velocity = -S
-        elif key == pygame.K_LEFT:
-            self.left_right_velocity = -S
-        elif key == pygame.K_RIGHT:
-            self.left_right_velocity = S
         elif key == pygame.K_w:
             self.up_down_velocity = S
         elif key == pygame.K_s:
@@ -110,8 +115,6 @@ class FrontEnd(object):
     def keyup(self, key):
         if key in [pygame.K_UP, pygame.K_DOWN]:
             self.for_back_velocity = 0
-        elif key in [pygame.K_LEFT, pygame.K_RIGHT]:
-            self.left_right_velocity = 0
         elif key in [pygame.K_w, pygame.K_s]:
             self.up_down_velocity = 0
         elif key in [pygame.K_a, pygame.K_d]:
@@ -129,18 +132,29 @@ class FrontEnd(object):
                 self.left_right_velocity, self.for_back_velocity,
                 self.up_down_velocity, self.yaw_velocity)
 
-    def draw_checkbox(self):
-        """ Draw the checkbox on the screen """
-        checkbox_color = (0, 255, 0) if self.blur_effect else (255, 255, 255)
-        pygame.draw.rect(self.screen, checkbox_color, (10, 10, 20, 20), 0)  # Checkbox square
+    def draw_checkboxes(self):
+        """ Draw checkboxes on the screen """
+        # Blur Effect checkbox
+        blur_color = (0, 255, 0) if self.blur_effect else (255, 255, 255)
+        pygame.draw.rect(self.screen, blur_color, (10, 10, 20, 20), 0)
         font = pygame.font.Font(None, 36)
-        text_surface = font.render("Blur Effect", True, (255, 255, 255))
-        self.screen.blit(text_surface, (40, 10))
+        blur_text = font.render("Blur Effect", True, (255, 255, 255))
+        self.screen.blit(blur_text, (40, 10))
 
-    def toggle_blur_effect(self, pos):
-        """ Toggle the blur effect when checkbox is clicked """
+        # Traffic Sign checkbox
+        sign_color = (0, 255, 0) if self.traffic_sign else (255, 255, 255)
+        pygame.draw.rect(self.screen, sign_color, (10, 40, 20, 20), 0)
+        sign_text = font.render("Traffic Sign", True, (255, 255, 255))
+        self.screen.blit(sign_text, (40, 40))
+
+    def handle_checkbox_click(self, pos):
+        """ Handle checkbox clicks """
+        # Blur Effect checkbox
         if 10 <= pos[0] <= 30 and 10 <= pos[1] <= 30:
             self.blur_effect = not self.blur_effect
+        # Traffic Sign checkbox
+        elif 10 <= pos[0] <= 30 and 40 <= pos[1] <= 60:
+            self.traffic_sign = not self.traffic_sign
 
 
 def main():
